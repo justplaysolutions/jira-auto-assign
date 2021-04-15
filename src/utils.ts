@@ -32,11 +32,10 @@ export const getJIRAClient = (domain: string, email: string, token: string): JIR
     });
   };
 
-  const setReviewer: JIRAClient["setReviewer"] = async ({ user, issueKey }) => {
-    console.log(user);
+  const setReviewer: JIRAClient["setReviewer"] = async ({ users, issueKey }) => {
     await client.put(`issue/${issueKey}`, {
       fields: {
-        customfield_10052: [user]
+        customfield_10052: users
       }
     });
   }
@@ -44,7 +43,7 @@ export const getJIRAClient = (domain: string, email: string, token: string): JIR
   const getIssue: JIRAClient["getIssue"] = async (id) => {
     try {
       const response = await client.get<JIRA.Issue>(
-        `/issue/${id}?fields=project,summary,issuetype,labels,status,customfield_10016`
+        `/issue/${id}?fields=project,summary,issuetype,labels,status,customfield_10052`
       );
       return response.data;
     } catch (e) {
@@ -62,6 +61,7 @@ export const getJIRAClient = (domain: string, email: string, token: string): JIR
           project,
           summary,
           customfield_10016: estimate,
+          customfield_10052: reviewers,
           labels: rawLabels,
           status: issueStatus,
         },
@@ -89,6 +89,7 @@ export const getJIRAClient = (domain: string, email: string, token: string): JIR
           url: `${baseURL}/browse/${project.key}`,
           key: project.key,
         },
+        reviewers,
         estimate:
           typeof estimate === "string" || typeof estimate === "number"
             ? estimate

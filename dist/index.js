@@ -9694,25 +9694,30 @@ function run() {
             });
             if (!(jiraUser === null || jiraUser === void 0 ? void 0 : jiraUser.displayName))
                 throw new Error(`JIRA account not found for ${user.name}`);
-            /*
-            const { assignee } = await jira.getTicketDetails(ISSUE_KEY);
-            if (assignee?.name === jiraUser.displayName) {
+            const { reviewers } = yield jira.getTicketDetails(ISSUE_KEY);
+            /* if (assignee?.name === jiraUser.displayName) {
               console.log(`${ISSUE_KEY} is already assigned to ${assignee.name}`);
               return;
             }
             await jira.assignUser({ userId: jiraUser.accountId, issueKey: ISSUE_KEY });
             console.log(`${ISSUE_KEY} assigned to ${jiraUser.displayName}`);*/
             console.log(jiraUser);
+            const obj = {};
+            if (reviewers) {
+                reviewers.forEach((reviewer) => obj[reviewer.accountId] = reviewer);
+            }
+            obj[jiraUser.accountId] = {
+                self: jiraUser.self,
+                accountId: jiraUser.accountId,
+                accountType: jiraUser.accountType,
+                displayName: jiraUser.displayName,
+                avatarUrls: jiraUser.avatarUrls,
+                active: jiraUser.active,
+                timeZone: jiraUser.timeZone
+            };
+            const users = Object.values(obj);
             yield jira.setReviewer({
-                user: {
-                    self: jiraUser.self,
-                    accountId: jiraUser.accountId,
-                    accountType: jiraUser.accountType,
-                    displayName: jiraUser.displayName,
-                    avatarUrls: jiraUser.avatarUrls,
-                    active: jiraUser.active,
-                    timeZone: jiraUser.timeZone
-                },
+                users,
                 issueKey: ISSUE_KEY
             });
         }
@@ -9772,17 +9777,16 @@ const getJIRAClient = (domain, email, token) => {
             accountId: userId,
         });
     });
-    const setReviewer = ({ user, issueKey }) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log(user);
+    const setReviewer = ({ users, issueKey }) => __awaiter(void 0, void 0, void 0, function* () {
         yield client.put(`issue/${issueKey}`, {
             fields: {
-                customfield_10052: [user]
+                customfield_10052: users
             }
         });
     });
     const getIssue = (id) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const response = yield client.get(`/issue/${id}?fields=project,summary,issuetype,labels,status,customfield_10016`);
+            const response = yield client.get(`/issue/${id}?fields=project,summary,issuetype,labels,status,customfield_10052`);
             return response.data;
         }
         catch (e) {
@@ -9792,7 +9796,7 @@ const getJIRAClient = (domain, email, token) => {
     const getTicketDetails = (key) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const issue = yield getIssue(key);
-            const { fields: { assignee, issuetype: type, project, summary, customfield_10016: estimate, labels: rawLabels, status: issueStatus, }, } = issue;
+            const { fields: { assignee, issuetype: type, project, summary, customfield_10016: estimate, customfield_10052: reviewers, labels: rawLabels, status: issueStatus, }, } = issue;
             const labels = rawLabels.map((label) => ({
                 name: label,
                 url: `${baseURL}/issues?jql=${encodeURIComponent(`project = ${project.key} AND labels = ${label} ORDER BY created DESC`)}`,
@@ -9812,6 +9816,7 @@ const getJIRAClient = (domain, email, token) => {
                     url: `${baseURL}/browse/${project.key}`,
                     key: project.key,
                 },
+                reviewers,
                 estimate: typeof estimate === "string" || typeof estimate === "number"
                     ? estimate
                     : "N/A",

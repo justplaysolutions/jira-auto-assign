@@ -1,6 +1,9 @@
 import { AxiosInstance } from "axios";
 
 export namespace JIRA {
+  export interface PartialUserObj {
+    [k: string]: PartialUser
+  }
   export interface PartialUser {
     accountId: string;
     accountType: string;
@@ -124,6 +127,7 @@ export namespace JIRA {
       issuetype: IssueType;
       project: IssueProject;
       labels: string[];
+      customfield_10052: JIRA.PartialUser[]
       [k: string]: unknown;
     };
   }
@@ -144,6 +148,7 @@ export interface JIRADetails {
     key: string;
   };
   estimate: string | number;
+  reviewers: JIRA.PartialUser[]
   assignee: {
     name: string;
     emailAddress: string;
@@ -163,7 +168,7 @@ export interface ActionInputs {
 export interface JIRAClient {
   client: AxiosInstance;
   assignUser: (x: { userId: string; issueKey: string }) => Promise<void>;
-  setReviewer: (x: { user: JIRA.PartialUser; issueKey: string }) => Promise<void>;
+  setReviewer: (x: { users: JIRA.PartialUser[]; issueKey: string }) => Promise<void>;
   findUser: (x: {
     displayName: string;
     issueKey: string;

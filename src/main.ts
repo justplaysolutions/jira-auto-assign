@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import { ActionInputs } from "./types";
+import { ActionInputs, JIRA } from "./types";
 
 import { getJIRAClient } from "./utils";
 
@@ -67,25 +67,31 @@ async function run() {
     if (!jiraUser?.displayName)
       throw new Error(`JIRA account not found for ${user.name}`);
 
-    /*
-    const { assignee } = await jira.getTicketDetails(ISSUE_KEY);
-    if (assignee?.name === jiraUser.displayName) {
+
+    const { reviewers } = await jira.getTicketDetails(ISSUE_KEY);
+    /* if (assignee?.name === jiraUser.displayName) {
       console.log(`${ISSUE_KEY} is already assigned to ${assignee.name}`);
       return;
     }
     await jira.assignUser({ userId: jiraUser.accountId, issueKey: ISSUE_KEY });
     console.log(`${ISSUE_KEY} assigned to ${jiraUser.displayName}`);*/
     console.log(jiraUser);
+    const obj: JIRA.PartialUserObj = {};
+    if (reviewers) {
+      reviewers.forEach((reviewer) => obj[reviewer.accountId] = reviewer);
+    }
+    obj[jiraUser.accountId] = {
+      self: jiraUser.self,
+      accountId: jiraUser.accountId,
+      accountType: jiraUser.accountType,
+      displayName: jiraUser.displayName,
+      avatarUrls: jiraUser.avatarUrls,
+      active: jiraUser.active,
+      timeZone: jiraUser.timeZone
+    };
+    const users = Object.values(obj);
     await jira.setReviewer({
-      user: {
-        self: jiraUser.self,
-        accountId: jiraUser.accountId,
-        accountType: jiraUser.accountType,
-        displayName: jiraUser.displayName,
-        avatarUrls: jiraUser.avatarUrls,
-        active: jiraUser.active,
-        timeZone: jiraUser.timeZone
-      },
+      users,
       issueKey: ISSUE_KEY
     });
   } catch (error) {
