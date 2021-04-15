@@ -15,11 +15,15 @@ const getInputs = (): ActionInputs => {
   const ISSUE_KEY: string = core.getInput("issue-key", {
     required: true,
   });
+  const USERNAME: string = core.getInput("username", {
+    required: true,
+  });
 
   return {
     ISSUE_KEY,
     JIRA_TOKEN,
     GITHUB_TOKEN,
+    USERNAME,
     JIRA_DOMAIN: JIRA_DOMAIN.endsWith("/")
       ? JIRA_DOMAIN.replace(/\/$/, "")
       : JIRA_DOMAIN,
@@ -30,7 +34,7 @@ async function run() {
   try {
     const inputs = getInputs();
     core.debug(`inputs: ${JSON.stringify(inputs, null, 2)}`);
-    const { JIRA_TOKEN, GITHUB_TOKEN, JIRA_DOMAIN, ISSUE_KEY } = inputs;
+    const { JIRA_TOKEN, GITHUB_TOKEN, JIRA_DOMAIN, ISSUE_KEY, USERNAME } = inputs;
 
     const { pull_request: pullRequest } = github.context.payload;
 
@@ -41,7 +45,7 @@ async function run() {
     // github octokit client with given token
     const octokit = github.getOctokit(GITHUB_TOKEN);
 
-    const username = pullRequest.user?.login;
+    const username = USERNAME;
     if (!username) throw new Error("Cannot find PR owner");
 
     const { data: user } = await octokit.users.getByUsername({

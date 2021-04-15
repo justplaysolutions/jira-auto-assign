@@ -142,6 +142,7 @@ export interface ActionInputs {
   JIRA_TOKEN: string;
   JIRA_DOMAIN: string;
   GITHUB_TOKEN: string;
+  USERNAME: string;
 }
 
 export interface JIRAClient {
