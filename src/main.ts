@@ -52,7 +52,7 @@ async function run() {
       username,
     });
 
-    if (!user?.name) throw new Error(`User not found: ${user?.name}`);
+    if (!user?.name) throw new Error(`User not found: ${USERNAME} ${user?.name}`);
 
     const jira = getJIRAClient(JIRA_DOMAIN, JIRA_TOKEN);
 
