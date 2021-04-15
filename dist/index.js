@@ -9694,13 +9694,27 @@ function run() {
             });
             if (!(jiraUser === null || jiraUser === void 0 ? void 0 : jiraUser.displayName))
                 throw new Error(`JIRA account not found for ${user.name}`);
-            const { assignee } = yield jira.getTicketDetails(ISSUE_KEY);
-            if ((assignee === null || assignee === void 0 ? void 0 : assignee.name) === jiraUser.displayName) {
-                console.log(`${ISSUE_KEY} is already assigned to ${assignee.name}`);
-                return;
+            /*
+            const { assignee } = await jira.getTicketDetails(ISSUE_KEY);
+            if (assignee?.name === jiraUser.displayName) {
+              console.log(`${ISSUE_KEY} is already assigned to ${assignee.name}`);
+              return;
             }
-            yield jira.assignUser({ userId: jiraUser.accountId, issueKey: ISSUE_KEY });
-            console.log(`${ISSUE_KEY} assigned to ${jiraUser.displayName}`);
+            await jira.assignUser({ userId: jiraUser.accountId, issueKey: ISSUE_KEY });
+            console.log(`${ISSUE_KEY} assigned to ${jiraUser.displayName}`);*/
+            console.log(jiraUser);
+            yield jira.setReviewer({
+                user: {
+                    self: jiraUser.self,
+                    accountId: jiraUser.accountId,
+                    accountType: jiraUser.accountType,
+                    displayName: jiraUser.displayName,
+                    avatarUrls: jiraUser.avatarUrls,
+                    active: jiraUser.active,
+                    timeZone: jiraUser.timeZone
+                },
+                issueKey: ISSUE_KEY
+            });
         }
         catch (error) {
             console.log({ error });
@@ -9758,6 +9772,14 @@ const getJIRAClient = (domain, email, token) => {
             accountId: userId,
         });
     });
+    const setReviewer = ({ user, issueKey }) => __awaiter(void 0, void 0, void 0, function* () {
+        console.log(user);
+        yield client.put(`issue/${issueKey}`, {
+            fields: {
+                customfield_10052: [user]
+            }
+        });
+    });
     const getIssue = (id) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const response = yield client.get(`/issue/${id}?fields=project,summary,issuetype,labels,status,customfield_10016`);
@@ -9806,6 +9828,7 @@ const getJIRAClient = (domain, email, token) => {
         getIssue,
         findUser,
         assignUser,
+        setReviewer
     };
 };
 exports.getJIRAClient = getJIRAClient;

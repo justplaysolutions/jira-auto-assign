@@ -32,6 +32,15 @@ export const getJIRAClient = (domain: string, email: string, token: string): JIR
     });
   };
 
+  const setReviewer: JIRAClient["setReviewer"] = async ({ user, issueKey }) => {
+    console.log(user);
+    await client.put(`issue/${issueKey}`, {
+      fields: {
+        customfield_10052: [user]
+      }
+    });
+  }
+
   const getIssue: JIRAClient["getIssue"] = async (id) => {
     try {
       const response = await client.get<JIRA.Issue>(
@@ -97,5 +106,6 @@ export const getJIRAClient = (domain: string, email: string, token: string): JIR
     getIssue,
     findUser,
     assignUser,
+    setReviewer
   };
 };

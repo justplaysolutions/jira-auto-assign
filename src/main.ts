@@ -67,13 +67,27 @@ async function run() {
     if (!jiraUser?.displayName)
       throw new Error(`JIRA account not found for ${user.name}`);
 
+    /*
     const { assignee } = await jira.getTicketDetails(ISSUE_KEY);
     if (assignee?.name === jiraUser.displayName) {
       console.log(`${ISSUE_KEY} is already assigned to ${assignee.name}`);
       return;
     }
     await jira.assignUser({ userId: jiraUser.accountId, issueKey: ISSUE_KEY });
-    console.log(`${ISSUE_KEY} assigned to ${jiraUser.displayName}`);
+    console.log(`${ISSUE_KEY} assigned to ${jiraUser.displayName}`);*/
+    console.log(jiraUser);
+    await jira.setReviewer({
+      user: {
+        self: jiraUser.self,
+        accountId: jiraUser.accountId,
+        accountType: jiraUser.accountType,
+        displayName: jiraUser.displayName,
+        avatarUrls: jiraUser.avatarUrls,
+        active: jiraUser.active,
+        timeZone: jiraUser.timeZone
+      },
+      issueKey: ISSUE_KEY
+    });
   } catch (error) {
     console.log({ error });
     core.setFailed(error.message);

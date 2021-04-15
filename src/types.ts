@@ -1,6 +1,20 @@
 import { AxiosInstance } from "axios";
 
 export namespace JIRA {
+  export interface PartialUser {
+    accountId: string;
+    accountType: string;
+    avatarUrls: {
+      "16x16": string;
+      "24x24": string;
+      "32x32": string;
+      "48x48": string;
+    };
+    displayName: string;
+    active: true;
+    timeZone: string;
+    self: string;
+  }
   export interface User {
     self: string;
     key: string;
@@ -149,6 +163,7 @@ export interface ActionInputs {
 export interface JIRAClient {
   client: AxiosInstance;
   assignUser: (x: { userId: string; issueKey: string }) => Promise<void>;
+  setReviewer: (x: { user: JIRA.PartialUser; issueKey: string }) => Promise<void>;
   findUser: (x: {
     displayName: string;
     issueKey: string;
