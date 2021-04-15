@@ -9763,7 +9763,7 @@ const getJIRAClient = (domain, email, token) => {
     const findUser = ({ displayName, issueKey, }) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const projectKey = issueKey.split("-")[0];
-            const lastName = displayName.split(" ")[1].toLowerCase();
+            const lastName = displayName.split(" ").slice(-1)[0].toLowerCase();
             const { data } = yield client.get(`/user/assignable/multiProjectSearch?query=${lastName}&projectKeys=${projectKey}`);
             return data === null || data === void 0 ? void 0 : data[0];
         }

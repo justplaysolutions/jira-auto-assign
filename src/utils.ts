@@ -15,7 +15,7 @@ export const getJIRAClient = (domain: string, email: string, token: string): JIR
   }) => {
     try {
       const projectKey = issueKey.split("-")[0];
-      const lastName = displayName.split(" ")[1].toLowerCase();
+      const lastName = displayName.split(" ").slice(-1)[0].toLowerCase();
       const { data } = await client.get<JIRA.User[]>(
         `/user/assignable/multiProjectSearch?query=${lastName}&projectKeys=${projectKey}`
       );
