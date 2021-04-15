@@ -15,11 +15,10 @@ export const getJIRAClient = (domain: string, email: string, token: string): JIR
   }) => {
     try {
       const projectKey = issueKey.split("-")[0];
-      const firstName = displayName.split(" ")[0].toLowerCase();
+      const lastName = displayName.split(" ")[1].toLowerCase();
       const { data } = await client.get<JIRA.User[]>(
-        `/user/assignable/multiProjectSearch?query=${firstName}&projectKeys=${projectKey}`
+        `/user/assignable/multiProjectSearch?query=${lastName}&projectKeys=${projectKey}`
       );
-      console.log(data[0].accountId);
       return data?.[0];
     } catch (e) {
       throw e;
