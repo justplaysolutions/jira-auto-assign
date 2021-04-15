@@ -9653,11 +9653,15 @@ const getInputs = () => {
     const USERNAME = core.getInput("username", {
         required: true,
     });
+    const JIRA_EMAIL = core.getInput("jira-email", {
+        required: true,
+    });
     return {
         ISSUE_KEY,
         JIRA_TOKEN,
         GITHUB_TOKEN,
         USERNAME,
+        JIRA_EMAIL,
         JIRA_DOMAIN: JIRA_DOMAIN.endsWith("/")
             ? JIRA_DOMAIN.replace(/\/$/, "")
             : JIRA_DOMAIN,
@@ -9668,7 +9672,7 @@ function run() {
         try {
             const inputs = getInputs();
             core.debug(`inputs: ${JSON.stringify(inputs, null, 2)}`);
-            const { JIRA_TOKEN, GITHUB_TOKEN, JIRA_DOMAIN, ISSUE_KEY, USERNAME } = inputs;
+            const { JIRA_TOKEN, GITHUB_TOKEN, JIRA_DOMAIN, ISSUE_KEY, USERNAME, JIRA_EMAIL } = inputs;
             const { pull_request: pullRequest } = github.context.payload;
             if (typeof pullRequest === "undefined") {
                 throw new Error(`Missing 'pull_request' from github action context.`);
@@ -9683,7 +9687,7 @@ function run() {
             });
             if (!(user === null || user === void 0 ? void 0 : user.name))
                 throw new Error(`User not found: ${USERNAME} ${user === null || user === void 0 ? void 0 : user.name}`);
-            const jira = utils_1.getJIRAClient(JIRA_DOMAIN, JIRA_TOKEN);
+            const jira = utils_1.getJIRAClient(JIRA_DOMAIN, JIRA_EMAIL, JIRA_TOKEN);
             const jiraUser = yield jira.findUser({
                 displayName: user.name,
                 issueKey: ISSUE_KEY,
@@ -9730,12 +9734,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getJIRAClient = void 0;
 const axios_1 = __importDefault(__nccwpck_require__(6545));
-const getJIRAClient = (domain, token) => {
+const getJIRAClient = (domain, email, token) => {
     const baseURL = `https://${domain}`;
     const client = axios_1.default.create({
         baseURL: `https://${domain}/rest/api/3`,
         timeout: 2000,
-        headers: { Authorization: `Basic ${token}` },
+        headers: { Authorization: `Basic ${new Buffer(`${email}:${token}`).toString('base64')}` },
     });
     const findUser = ({ displayName, issueKey, }) => __awaiter(void 0, void 0, void 0, function* () {
         try {

@@ -1,12 +1,12 @@
 import axios from "axios";
 import { JIRA, JIRAClient } from "./types";
 
-export const getJIRAClient = (domain: string, token: string): JIRAClient => {
+export const getJIRAClient = (domain: string, email: string, token: string): JIRAClient => {
   const baseURL = `https://${domain}`;
   const client = axios.create({
     baseURL: `https://${domain}/rest/api/3`,
     timeout: 2000,
-    headers: { Authorization: `Basic ${token}` },
+    headers: { Authorization: `Basic ${new Buffer(`${email}:${token}`).toString('base64')}` },
   });
 
   const findUser: JIRAClient["findUser"] = async ({

@@ -18,12 +18,16 @@ const getInputs = (): ActionInputs => {
   const USERNAME: string = core.getInput("username", {
     required: true,
   });
+  const JIRA_EMAIL: string = core.getInput("jira-email", {
+    required: true,
+  });
 
   return {
     ISSUE_KEY,
     JIRA_TOKEN,
     GITHUB_TOKEN,
     USERNAME,
+    JIRA_EMAIL,
     JIRA_DOMAIN: JIRA_DOMAIN.endsWith("/")
       ? JIRA_DOMAIN.replace(/\/$/, "")
       : JIRA_DOMAIN,
@@ -34,7 +38,7 @@ async function run() {
   try {
     const inputs = getInputs();
     core.debug(`inputs: ${JSON.stringify(inputs, null, 2)}`);
-    const { JIRA_TOKEN, GITHUB_TOKEN, JIRA_DOMAIN, ISSUE_KEY, USERNAME } = inputs;
+    const { JIRA_TOKEN, GITHUB_TOKEN, JIRA_DOMAIN, ISSUE_KEY, USERNAME, JIRA_EMAIL } = inputs;
 
     const { pull_request: pullRequest } = github.context.payload;
 
@@ -54,7 +58,7 @@ async function run() {
 
     if (!user?.name) throw new Error(`User not found: ${USERNAME} ${user?.name}`);
 
-    const jira = getJIRAClient(JIRA_DOMAIN, JIRA_TOKEN);
+    const jira = getJIRAClient(JIRA_DOMAIN, JIRA_EMAIL, JIRA_TOKEN);
 
     const jiraUser = await jira.findUser({
       displayName: user.name,
