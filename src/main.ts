@@ -48,8 +48,8 @@ async function run() {
       { path: "services/teamadmin/", apps: ["teamadmin"] },
       { path: "services/stats-spots-advanced/", apps: ["stats-spots-advanced"] },
       { path: "services/stats-spots/", apps: ["stats-spots"] },
-      { path: "linked_modules/justplay-stats/", apps: ["justplay-stats"] },
-      { path: "linked_modules/justplay-video/", apps: ["justplay-video"] },
+      { path: "linked_modules/justplay-stats/", apps: ["stats-spots", "stats-spots-advanced", "superadmin"] },
+      { path: "linked_modules/justplay-video/", apps: ["transcode-server"] },
     ];
 
     let apps: string[] = [];
