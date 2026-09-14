@@ -9683,7 +9683,6 @@ function run() {
                 { path: "services/stats-spots/", apps: ["stats-spots"] },
                 { path: "linked_modules/justplay-stats/", apps: ["justplay-stats"] },
                 { path: "linked_modules/justplay-video/", apps: ["justplay-video"] },
-                { path: "shared_packages/justplay-common/", apps: ["teamadmin", "recruit"] },
             ];
             const diff = yield new Promise((resolve, reject) => {
                 child_process_1.exec(`git diff --name-only origin/master...${github.context.sha}`, (error, stdout, stderr) => {
