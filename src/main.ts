@@ -57,12 +57,16 @@ async function run() {
       after?: string;
       pull_request?: { base: { sha: string }; head: { sha: string } };
     };
-    const diffRange = eventPayload.pull_request
-      ? `${eventPayload.pull_request.base.sha}...${eventPayload.pull_request.head.sha}`
-      : `${eventPayload.before}...${eventPayload.after || github.context.sha}`;
+    const afterSha = eventPayload.after || github.context.sha;
+    const isInitialPush = eventPayload.before?.match(/^0+$/);
+    const diffCommand = eventPayload.pull_request
+      ? `git diff --name-only ${eventPayload.pull_request.base.sha}...${eventPayload.pull_request.head.sha}`
+      : isInitialPush
+        ? `git diff-tree --root --no-commit-id --name-only -r ${afterSha}`
+        : `git diff --name-only ${eventPayload.before}...${afterSha}`;
 
     const diff = await new Promise<string>((resolve, reject) => {
-      exec(`git diff --name-only ${diffRange}`, (error, stdout, stderr) => {
+      exec(diffCommand, (error, stdout, stderr) => {
         if (error || stderr) {
           reject(error || new Error(stderr));
           return;

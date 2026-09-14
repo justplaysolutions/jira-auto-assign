@@ -9669,6 +9669,7 @@ const getInputs = () => {
     };
 };
 function run() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const inputs = getInputs();
@@ -9685,11 +9686,15 @@ function run() {
                 { path: "linked_modules/justplay-video/", apps: ["justplay-video"] },
             ];
             const eventPayload = github.context.payload;
-            const diffRange = eventPayload.pull_request
-                ? `${eventPayload.pull_request.base.sha}...${eventPayload.pull_request.head.sha}`
-                : `${eventPayload.before}...${eventPayload.after || github.context.sha}`;
+            const afterSha = eventPayload.after || github.context.sha;
+            const isInitialPush = (_a = eventPayload.before) === null || _a === void 0 ? void 0 : _a.match(/^0+$/);
+            const diffCommand = eventPayload.pull_request
+                ? `git diff --name-only ${eventPayload.pull_request.base.sha}...${eventPayload.pull_request.head.sha}`
+                : isInitialPush
+                    ? `git diff-tree --root --no-commit-id --name-only -r ${afterSha}`
+                    : `git diff --name-only ${eventPayload.before}...${afterSha}`;
             const diff = yield new Promise((resolve, reject) => {
-                child_process_1.exec(`git diff --name-only ${diffRange}`, (error, stdout, stderr) => {
+                child_process_1.exec(diffCommand, (error, stdout, stderr) => {
                     if (error || stderr) {
                         reject(error || new Error(stderr));
                         return;
