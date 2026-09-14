@@ -9684,8 +9684,12 @@ function run() {
                 { path: "linked_modules/justplay-stats/", apps: ["justplay-stats"] },
                 { path: "linked_modules/justplay-video/", apps: ["justplay-video"] },
             ];
+            const eventPayload = github.context.payload;
+            const diffRange = eventPayload.pull_request
+                ? `${eventPayload.pull_request.base.sha}...${eventPayload.pull_request.head.sha}`
+                : `${eventPayload.before}...${eventPayload.after || github.context.sha}`;
             const diff = yield new Promise((resolve, reject) => {
-                child_process_1.exec(`git diff --name-only origin/master...${github.context.sha}`, (error, stdout, stderr) => {
+                child_process_1.exec(`git diff --name-only ${diffRange}`, (error, stdout, stderr) => {
                     if (error || stderr) {
                         reject(error || new Error(stderr));
                         return;

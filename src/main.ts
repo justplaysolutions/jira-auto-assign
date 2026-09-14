@@ -52,8 +52,17 @@ async function run() {
       { path: "linked_modules/justplay-video/", apps: ["justplay-video"] },
     ];
 
+    const eventPayload = github.context.payload as {
+      before?: string;
+      after?: string;
+      pull_request?: { base: { sha: string }; head: { sha: string } };
+    };
+    const diffRange = eventPayload.pull_request
+      ? `${eventPayload.pull_request.base.sha}...${eventPayload.pull_request.head.sha}`
+      : `${eventPayload.before}...${eventPayload.after || github.context.sha}`;
+
     const diff = await new Promise<string>((resolve, reject) => {
-      exec(`git diff --name-only origin/master...${github.context.sha}`, (error, stdout, stderr) => {
+      exec(`git diff --name-only ${diffRange}`, (error, stdout, stderr) => {
         if (error || stderr) {
           reject(error || new Error(stderr));
           return;
