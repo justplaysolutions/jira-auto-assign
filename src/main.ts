@@ -52,37 +52,37 @@ async function run() {
       { path: "linked_modules/justplay-video/", apps: ["justplay-video"] },
     ];
 
-    const eventPayload = github.context.payload as {
-      before?: string;
-      after?: string;
-      pull_request?: { base: { sha: string }; head: { sha: string } };
-    };
-    const afterSha = eventPayload.after || github.context.sha;
-    const isInitialPush = eventPayload.before?.match(/^0+$/);
-    const diffCommand = eventPayload.pull_request
-      ? `git diff --name-only ${eventPayload.pull_request.base.sha}...${eventPayload.pull_request.head.sha}`
-      : isInitialPush
+    let apps: string[] = [];
+    if (github.context.eventName === "push") {
+      const eventPayload = github.context.payload as {
+        before?: string;
+        after?: string;
+      };
+      const afterSha = eventPayload.after || github.context.sha;
+      const isInitialPush = eventPayload.before?.match(/^0+$/);
+      const diffCommand = isInitialPush
         ? `git diff-tree --root --no-commit-id --name-only -r ${afterSha}`
         : `git diff --name-only ${eventPayload.before}...${afterSha}`;
 
-    const diff = await new Promise<string>((resolve, reject) => {
-      exec(diffCommand, (error, stdout, stderr) => {
-        if (error || stderr) {
-          reject(error || new Error(stderr));
-          return;
-        }
-        resolve(stdout);
-      });
-    });
-    const changedFiles = diff.split(/\r?\n/).filter(Boolean);
-    const apps = productsInFile.reduce<string[]>((result, product) => {
-      if (changedFiles.some((file) => file.startsWith(product.path))) {
-        product.apps.forEach((app) => {
-          if (!result.includes(app)) result.push(app);
+      const diff = await new Promise<string>((resolve, reject) => {
+        exec(diffCommand, (error, stdout, stderr) => {
+          if (error || stderr) {
+            reject(error || new Error(stderr));
+            return;
+          }
+          resolve(stdout);
         });
-      }
-      return result;
-    }, []);
+      });
+      const changedFiles = diff.split(/\r?\n/).filter(Boolean);
+      apps = productsInFile.reduce<string[]>((result, product) => {
+        if (changedFiles.some((file) => file.startsWith(product.path))) {
+          product.apps.forEach((app) => {
+            if (!result.includes(app)) result.push(app);
+          });
+        }
+        return result;
+      }, []);
+    }
 
     // github octokit client with given token
     const octokit = github.getOctokit(GITHUB_TOKEN);

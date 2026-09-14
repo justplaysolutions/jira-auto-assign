@@ -9685,33 +9685,34 @@ function run() {
                 { path: "linked_modules/justplay-stats/", apps: ["justplay-stats"] },
                 { path: "linked_modules/justplay-video/", apps: ["justplay-video"] },
             ];
-            const eventPayload = github.context.payload;
-            const afterSha = eventPayload.after || github.context.sha;
-            const isInitialPush = (_a = eventPayload.before) === null || _a === void 0 ? void 0 : _a.match(/^0+$/);
-            const diffCommand = eventPayload.pull_request
-                ? `git diff --name-only ${eventPayload.pull_request.base.sha}...${eventPayload.pull_request.head.sha}`
-                : isInitialPush
+            let apps = [];
+            if (github.context.eventName === "push") {
+                const eventPayload = github.context.payload;
+                const afterSha = eventPayload.after || github.context.sha;
+                const isInitialPush = (_a = eventPayload.before) === null || _a === void 0 ? void 0 : _a.match(/^0+$/);
+                const diffCommand = isInitialPush
                     ? `git diff-tree --root --no-commit-id --name-only -r ${afterSha}`
                     : `git diff --name-only ${eventPayload.before}...${afterSha}`;
-            const diff = yield new Promise((resolve, reject) => {
-                child_process_1.exec(diffCommand, (error, stdout, stderr) => {
-                    if (error || stderr) {
-                        reject(error || new Error(stderr));
-                        return;
-                    }
-                    resolve(stdout);
-                });
-            });
-            const changedFiles = diff.split(/\r?\n/).filter(Boolean);
-            const apps = productsInFile.reduce((result, product) => {
-                if (changedFiles.some((file) => file.startsWith(product.path))) {
-                    product.apps.forEach((app) => {
-                        if (!result.includes(app))
-                            result.push(app);
+                const diff = yield new Promise((resolve, reject) => {
+                    child_process_1.exec(diffCommand, (error, stdout, stderr) => {
+                        if (error || stderr) {
+                            reject(error || new Error(stderr));
+                            return;
+                        }
+                        resolve(stdout);
                     });
-                }
-                return result;
-            }, []);
+                });
+                const changedFiles = diff.split(/\r?\n/).filter(Boolean);
+                apps = productsInFile.reduce((result, product) => {
+                    if (changedFiles.some((file) => file.startsWith(product.path))) {
+                        product.apps.forEach((app) => {
+                            if (!result.includes(app))
+                                result.push(app);
+                        });
+                    }
+                    return result;
+                }, []);
+            }
             // github octokit client with given token
             const octokit = github.getOctokit(GITHUB_TOKEN);
             const username = USERNAME;
