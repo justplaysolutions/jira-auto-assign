@@ -154,6 +154,7 @@ export interface JIRADetails {
     emailAddress: string;
   };
   labels: readonly { name: string; url: string }[];
+  products: string[];
 }
 
 export interface ActionInputs {
@@ -175,4 +176,5 @@ export interface JIRAClient {
   }) => Promise<JIRA.User>;
   getIssue: (key: string) => Promise<JIRA.Issue>;
   getTicketDetails: (key: string) => Promise<JIRADetails>;
+  setApps: (x: { apps: string[]; issueKey: string }) => Promise<void>;
 }

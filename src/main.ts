@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
+import { exec } from "child_process";
 import { ActionInputs, JIRA } from "./types";
 
 import { getJIRAClient } from "./utils";
@@ -40,11 +41,36 @@ async function run() {
     core.debug(`inputs: ${JSON.stringify(inputs, null, 2)}`);
     const { JIRA_TOKEN, GITHUB_TOKEN, JIRA_DOMAIN, ISSUE_KEY, USERNAME, JIRA_EMAIL } = inputs;
 
-    const { pull_request: pullRequest } = github.context.payload;
+    const productsInFile = [
+      { path: "services/app/", apps: ["app"] },
+      { path: "services/recruit/", apps: ["recruit"] },
+      { path: "services/superadmin/", apps: ["superadmin"] },
+      { path: "services/teamadmin/", apps: ["teamadmin"] },
+      { path: "services/stats-spots-advanced/", apps: ["stats-spots-advanced"] },
+      { path: "services/stats-spots/", apps: ["stats-spots"] },
+      { path: "linked_modules/justplay-stats/", apps: ["justplay-stats"] },
+      { path: "linked_modules/justplay-video/", apps: ["justplay-video"] },
+      { path: "shared_packages/justplay-common/", apps: ["teamadmin", "recruit"] },
+    ];
 
-    if (typeof pullRequest === "undefined") {
-      throw new Error(`Missing 'pull_request' from github action context.`);
-    }
+    const diff = await new Promise<string>((resolve, reject) => {
+      exec(`git diff --name-only origin/master...${github.context.sha}`, (error, stdout, stderr) => {
+        if (error || stderr) {
+          reject(error || new Error(stderr));
+          return;
+        }
+        resolve(stdout);
+      });
+    });
+    const changedFiles = diff.split(/\r?\n/).filter(Boolean);
+    const apps = productsInFile.reduce<string[]>((result, product) => {
+      if (changedFiles.some((file) => file.startsWith(product.path))) {
+        product.apps.forEach((app) => {
+          if (!result.includes(app)) result.push(app);
+        });
+      }
+      return result;
+    }, []);
 
     // github octokit client with given token
     const octokit = github.getOctokit(GITHUB_TOKEN);
@@ -69,6 +95,10 @@ async function run() {
 
 
     const { reviewers } = await jira.getTicketDetails(ISSUE_KEY);
+    if (apps.length) {
+      await jira.setApps({ apps, issueKey: ISSUE_KEY });
+      console.log(`JIRA apps updated: ${apps.join(", ")}`);
+    }
     /* if (assignee?.name === jiraUser.displayName) {
       console.log(`${ISSUE_KEY} is already assigned to ${assignee.name}`);
       return;
